@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "Score": {
+      "title": "Score",
+      "description": "Represents a user's quiz score.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The unique ID of the user." },
+        "userName": { "type": "string", "description": "The name of the user." },
+        "userPhoto": { "type": "string", "description": "The photo URL of the user." },
+        "score": { "type": "integer", "description": "The number of correct answers." },
+        "totalQuestions": { "type": "integer", "description": "The total number of questions." },
+        "category": { "type": "string", "description": "The subcategory of the quiz." },
+        "difficulty": { "type": "string", "description": "The difficulty level." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the score was achieved." }
+      },
+      "required": ["userId", "userName", "score", "totalQuestions", "category", "difficulty", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/scores/{scoreId}": {
+      "schema": "Score",
+      "description": "Global leaderboard scores."
+    }
+  }
+}

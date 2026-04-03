@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: scores
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required) - The unique ID of the user.
+    //   - userName: string (required) - The name of the user.
+    //   - userPhoto: string (optional) - The photo URL of the user.
+    //   - score: integer (required) - The number of correct answers.
+    //   - totalQuestions: integer (required) - The total number of questions.
+    //   - category: string (required) - The subcategory of the quiz.
+    //   - difficulty: string (required) - The difficulty level.
+    //   - timestamp: timestamp (required) - When the score was achieved.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidScore(data) {
+      return data.userId is string && data.userId.size() > 0 &&
+             data.userName is string && data.userName.size() > 0 && data.userName.size() < 100 &&
+             (data.userPhoto == null || (data.userPhoto is string && data.userPhoto.size() < 1000)) &&
+             data.score is int && data.score >= 0 &&
+             data.totalQuestions is int && data.totalQuestions > 0 &&
+             data.category is string && data.category.size() > 0 &&
+             data.difficulty in ['easy', 'medium', 'hard'] &&
+             data.timestamp is timestamp;
+    }
+
+    match /scores/{scoreId} {
+      // Anyone can read scores for the leaderboard
+      allow read: if true;
+      
+      // Only authenticated users can create their own scores
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      isValidScore(request.resource.data);
+      
+      // Scores are immutable
+      allow update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}
